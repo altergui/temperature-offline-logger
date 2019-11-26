@@ -32,12 +32,6 @@ WiFiUDP UDP;                   // Create an instance of the WiFiUDP class to sen
 const char *ssid = "TemperaturaNTP"; // The name of the Wi-Fi network that will be created
 const char *password = "";   // The password required to connect to it, leave blank for an open network
 
-IPAddress timeServerIP;        // The time.nist.gov NTP server's IP address
-const char* ntpServerName = "time.nist.gov";
-
-const int NTP_PACKET_SIZE = 48;          // NTP time stamp is in the first 48 bytes of the message
-
-byte packetBuffer[NTP_PACKET_SIZE];      // A buffer to hold incoming and outgoing packets
 
 /*__________________________________________________________SETUP__________________________________________________________*/
 
@@ -68,19 +62,10 @@ void setup() {
 
   startUDP();                  // Start listening for UDP messages to port 123
 
-  WiFi.hostByName(ntpServerName, timeServerIP); // Get the IP address of the NTP server
-  Serial.print("Time server IP:\t");
-  Serial.println(timeServerIP);
-
-  sendNTPpacket(timeServerIP);
   delay(500);
 }
 
 /*__________________________________________________________LOOP__________________________________________________________*/
-
-const unsigned long intervalNTP = ONE_HOUR; // Update the time every hour
-unsigned long prevNTP = 0;
-unsigned long lastNTPResponse = millis();
 
 const unsigned long intervalTemp = 60000;   // Do a temperature measurement every minute
 unsigned long prevTemp = 0;
@@ -92,20 +77,6 @@ uint32_t timeUNIX = 0;                      // The most recent timestamp receive
 void loop() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - prevNTP > intervalNTP) { // Request the time from the time server every hour
-    prevNTP = currentMillis;
-    sendNTPpacket(timeServerIP);
-  }
-
-  uint32_t time = getTime();                   // Check if the time server has responded, if so, get the UNIX time
-  if (time) {
-    timeUNIX = time;
-    Serial.print("NTP response:\t");
-    Serial.println(timeUNIX);
-    lastNTPResponse = millis();
-  }
-
-  if (timeUNIX != 0) {
     if (currentMillis - prevTemp > intervalTemp) {  // Every minute, request the temperature
       tempSensors.requestTemperatures(); // Request the temperature from the sensor (it takes some time to read it)
       tmpRequested = true;
@@ -113,8 +84,7 @@ void loop() {
       Serial.println("Temperature requested");
     }
     if (currentMillis - prevTemp > DS_delay && tmpRequested) { // 750 ms after requesting the temperature
-      uint32_t actualTime = timeUNIX + (currentMillis - lastNTPResponse) / 1000;
-      // The actual time is the last NTP time plus the time that has elapsed since the last NTP response
+      uint32_t actualTime = currentMillis;
       tmpRequested = false;
       float temp = tempSensors.getTempCByIndex(0); // Get the temperature from the sensor
       temp = round(temp * 100.0) / 100.0; // round temperature to 2 digits
@@ -127,10 +97,6 @@ void loop() {
       tempLog.println(temp);
       tempLog.close();
     }
-  } else {                                    // If we didn't receive an NTP response yet, send another request
-    sendNTPpacket(timeServerIP);
-    delay(500);
-  }
 
   server.handleClient();                      // run the server
   ArduinoOTA.handle();                        // listen for OTA events
@@ -306,30 +272,3 @@ String getContentType(String filename) { // determine the filetype of a given fi
   return "text/plain";
 }
 
-unsigned long getTime() { // Check if the time server has responded, if so, get the UNIX time, otherwise, return 0
-  if (UDP.parsePacket() == 0) { // If there's no response (yet)
-    return 0;
-  }
-  UDP.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
-  // Combine the 4 timestamp bytes into one 32-bit number
-  uint32_t NTPTime = (packetBuffer[40] << 24) | (packetBuffer[41] << 16) | (packetBuffer[42] << 8) | packetBuffer[43];
-  // Convert NTP time to a UNIX timestamp:
-  // Unix time starts on Jan 1 1970. That's 2208988800 seconds in NTP time:
-  const uint32_t seventyYears = 2208988800UL;
-  // subtract seventy years:
-  uint32_t UNIXTime = NTPTime - seventyYears;
-  return UNIXTime;
-}
-
-
-void sendNTPpacket(IPAddress& address) {
-  Serial.println("Sending NTP request");
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);  // set all bytes in the buffer to 0
-  // Initialize values needed to form NTP request
-  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-
-  // send a packet requesting a timestamp:
-  UDP.beginPacket(address, 123); // NTP requests are to port 123
-  UDP.write(packetBuffer, NTP_PACKET_SIZE);
-  UDP.endPacket();
-}

@@ -29,6 +29,9 @@ const char* mdnsName = "esp8266";        // Domain name for the mDNS responder
 
 WiFiUDP UDP;                   // Create an instance of the WiFiUDP class to send and receive UDP messages
 
+const char *ssid = "Temperatura"; // The name of the Wi-Fi network that will be created
+const char *password = "";   // The password required to connect to it, leave blank for an open network
+
 IPAddress timeServerIP;        // The time.nist.gov NTP server's IP address
 const char* ntpServerName = "time.nist.gov";
 
@@ -136,6 +139,16 @@ void loop() {
 /*__________________________________________________________SETUP_FUNCTIONS__________________________________________________________*/
 
 void startWiFi() { // Try to connect to some given access points. Then wait for a connection
+
+  // But also start an AP
+  WiFi.softAP(ssid, password);             // Start the access point
+  Serial.print("Access Point \"");
+  Serial.print(ssid);
+  Serial.println("\" started");
+
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.softAPIP());         // Send the IP address of the ESP8266 to the computer
+
   wifiMulti.addAP("Costurezas", "DonaEster");   // add Wi-Fi networks you want to connect to
   wifiMulti.addAP("internet", "internet");
 

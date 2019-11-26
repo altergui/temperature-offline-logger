@@ -10,6 +10,8 @@
 
 #define ONE_HOUR 3600000UL
 
+#define LED 2
+#define LED_INTERVAL 3 // seconds
 #define TEMP_SENSOR_PIN D6
 
 OneWire oneWire(TEMP_SENSOR_PIN);        // Set up a OneWire instance to communicate with OneWire devices
@@ -55,6 +57,8 @@ void setup() {
     delay(1000);
     ESP.reset();
   }
+
+  pinMode(LED, OUTPUT);
 
   startWiFi();                 // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
 
@@ -130,6 +134,13 @@ void loop() {
   } else {                                    // If we didn't receive an NTP response yet, send another request
     sendNTPpacket(timeServerIP);
     delay(500);
+  }
+
+  // poor man's blink
+  if (currentMillis / 1000 % LED_INTERVAL) {
+    digitalWrite(LED, HIGH);
+  } else {
+    digitalWrite(LED, LOW);
   }
 
   server.handleClient();                      // run the server

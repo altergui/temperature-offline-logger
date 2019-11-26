@@ -29,7 +29,7 @@ const char* mdnsName = "esp8266";        // Domain name for the mDNS responder
 
 WiFiUDP UDP;                   // Create an instance of the WiFiUDP class to send and receive UDP messages
 
-const char *ssid = "TemperaturaNTP"; // The name of the Wi-Fi network that will be created
+const char *ssid = "TemperaturaOffline"; // The name of the Wi-Fi network that will be created
 const char *password = "";   // The password required to connect to it, leave blank for an open network
 
 

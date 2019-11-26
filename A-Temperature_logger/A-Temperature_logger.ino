@@ -49,6 +49,7 @@ void setup() {
   if (tempSensors.getDeviceCount() == 0) {
     Serial.printf("No DS18x20 temperature sensor found on pin %d. Rebooting.\r\n", TEMP_SENSOR_PIN);
     Serial.flush();
+    delay(1000);
     ESP.reset();
   }
 

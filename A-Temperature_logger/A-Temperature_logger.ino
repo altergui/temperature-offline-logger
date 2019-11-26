@@ -10,7 +10,7 @@
 
 #define ONE_HOUR 3600000UL
 
-#define TEMP_SENSOR_PIN 5
+#define TEMP_SENSOR_PIN D6
 
 OneWire oneWire(TEMP_SENSOR_PIN);        // Set up a OneWire instance to communicate with OneWire devices
 

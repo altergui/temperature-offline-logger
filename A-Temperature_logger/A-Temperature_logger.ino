@@ -100,10 +100,6 @@ void loop() {
     Serial.print("NTP response:\t");
     Serial.println(timeUNIX);
     lastNTPResponse = millis();
-  } else if ((millis() - lastNTPResponse) > 24UL * ONE_HOUR) {
-    Serial.println("More than 24 hours since last NTP response. Rebooting.");
-    Serial.flush();
-    ESP.reset();
   }
 
   if (timeUNIX != 0) {

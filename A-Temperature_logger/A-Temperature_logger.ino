@@ -10,6 +10,8 @@
 
 #define ONE_HOUR 3600000UL
 
+#define LED 2
+#define LED_INTERVAL 3 // seconds
 #define TEMP_SENSOR_PIN D6
 
 OneWire oneWire(TEMP_SENSOR_PIN);        // Set up a OneWire instance to communicate with OneWire devices
@@ -50,6 +52,8 @@ void setup() {
     ESP.reset();
   }
 
+  pinMode(LED, OUTPUT);
+
   startWiFi();                 // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
 
   startOTA();                  // Start the OTA service
@@ -84,7 +88,7 @@ void loop() {
       Serial.println("Temperature requested");
     }
     if (currentMillis - prevTemp > DS_delay && tmpRequested) { // 750 ms after requesting the temperature
-      uint32_t actualTime = currentMillis;
+      uint32_t actualTime = currentMillis / 1000 + 3 * 3600;
       tmpRequested = false;
       float temp = tempSensors.getTempCByIndex(0); // Get the temperature from the sensor
       temp = round(temp * 100.0) / 100.0; // round temperature to 2 digits
@@ -97,6 +101,13 @@ void loop() {
       tempLog.println(temp);
       tempLog.close();
     }
+
+  // poor man's blink
+  if (currentMillis / 1000 % LED_INTERVAL) {
+    digitalWrite(LED, HIGH);
+  } else {
+    digitalWrite(LED, LOW);
+  }
 
   server.handleClient();                      // run the server
   ArduinoOTA.handle();                        // listen for OTA events
@@ -165,6 +176,7 @@ void startOTA() { // Start the OTA service
 
 void startSPIFFS() { // Start the SPIFFS and list all contents
   SPIFFS.begin();                             // Start the SPI Flash File System (SPIFFS)
+  SPIFFS.remove("/temp.csv"); // wipe out last .csv since there's no NTP support
   Serial.println("SPIFFS started. Contents:");
   {
     Dir dir = SPIFFS.openDir("/");

@@ -140,9 +140,8 @@ void loop() {
 /*__________________________________________________________SETUP_FUNCTIONS__________________________________________________________*/
 
 void startWiFi() { // Try to connect to some given access points. Then wait for a connection
-  wifiMulti.addAP("ssid_from_AP_1", "your_password_for_AP_1");   // add Wi-Fi networks you want to connect to
-  wifiMulti.addAP("ssid_from_AP_2", "your_password_for_AP_2");
-  wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
+  wifiMulti.addAP("Costurezas", "DonaEster");   // add Wi-Fi networks you want to connect to
+  wifiMulti.addAP("internet", "internet");
 
   Serial.println("Connecting");
   while (wifiMulti.run() != WL_CONNECTED) {  // Wait for the Wi-Fi to connect
